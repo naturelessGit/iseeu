@@ -72,6 +72,7 @@ pkg install -y openssh python
 ./start.sh          # Helper
 ```
 
+It is reccomended to use ./start.sh
 ---
 
 ## 🌟 Key Features
