@@ -10,7 +10,7 @@ case "$choice" in
   1)
     clear
     chmod +x Iseeu.sh
-    ./Iseeu.sh
+    sh Iseeu.sh
     ;;
   2)
     clear
