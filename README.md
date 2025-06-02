@@ -1,6 +1,6 @@
 # iseeu
 
-# 🌍 iSeeU - Universal Geolocation Tracker
+🌍 iSeeU - Universal Geolocation Tracker
 **Works on Kali, Fedora, Ubuntu, macOS, Termux (Android), and all Linux distros**
 
 [![GitHub stars](https://img.shields.io/github/stars/Maiake-ops/iseeu?style=social)](https://github.com/Maiake-ops/iseeu)  
