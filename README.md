@@ -24,7 +24,7 @@ Works on **Kali**, **Ubuntu**, **Fedora**, **Arch**, **macOS**, **Termux (Androi
 | macOS (Homebrew) | `brew install git`                         |
 | Termux (Android) | `pkg install -y git`                       |
 
-### 2. Clone the Repo
+# 2. Clone the Repo
 
 ```bash
 git clone https://github.com/Maiake-ops/iseeu.git
