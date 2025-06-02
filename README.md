@@ -1,6 +1,5 @@
 # iseeu
 
-```markdown
 # 🌍 iSeeU - Universal Geolocation Tracker
 **Works on Kali, Fedora, Ubuntu, macOS, Termux (Android), and all Linux distros**
 
