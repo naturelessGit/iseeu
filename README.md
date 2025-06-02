@@ -78,7 +78,7 @@ It is reccomended to use ./start.sh
 ## 🌟 Key Features
 - ✔️ **Git Included** - Full installation guide for all package managers
 - ✔️ **One-Command Setup** - Simple copy-paste installation
-- ✔️ **Universal Compatibility** - Works on all major OSes
+- ✔️ **Universal Compatibility** - Works on many major OSes
 
 ---
 
