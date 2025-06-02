@@ -1,9 +1,9 @@
 #!/bin/bash
 clear
 echo "[1] Start I-See-U"
-echo "[2] Stop services and restart Iseeu helper"
+echo "[2] Stop services and restart helper"
 
-read -p "> " choice
+read -rp "> " choice
 
 case $choice in
   1)
@@ -15,13 +15,11 @@ case $choice in
     clear
     chmod +x kill-server.sh
     ./kill-server.sh
-    clear
     ./start.sh
     ;;
   *)
-    echo "[!] Invalid option."
+    echo "[!] Invalid option. Try again."
     sleep 2
-    clear
     ./start.sh
     ;;
 esac
