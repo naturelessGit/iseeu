@@ -69,6 +69,7 @@ pkg install -y openssh python
 ```bash
 ./Iseeu.sh          # Start tracker
 ./kill-server.sh    # Stop all services
+./start.sh          # Helper
 ```
 
 ---
