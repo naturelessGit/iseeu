@@ -92,4 +92,3 @@ pkg install -y openssh python
 ## ⚠️ Legal Notice
 **For authorized security testing only.**  
 ❗ Requires explicit permission before use.
-```
