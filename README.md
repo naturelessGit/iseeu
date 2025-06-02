@@ -1,6 +1,5 @@
 # iseeu
 
-```markdown
 # 🌍 iSeeU - Universal Geolocation Tracker
 **Works on Kali, Fedora, Ubuntu, macOS, Termux (Android), and all Linux distros**
 
@@ -70,14 +69,16 @@ pkg install -y openssh python
 ```bash
 ./Iseeu.sh          # Start tracker
 ./kill-server.sh    # Stop all services
+./start.sh          # Helper
 ```
 
+It is reccomended to use ./start.sh
 ---
 
 ## 🌟 Key Features
 - ✔️ **Git Included** - Full installation guide for all package managers
 - ✔️ **One-Command Setup** - Simple copy-paste installation
-- ✔️ **Universal Compatibility** - Works on all major OSes
+- ✔️ **Universal Compatibility** - Works on many major OSes
 
 ---
 
@@ -85,10 +86,10 @@ pkg install -y openssh python
 - Original: [Viral Maniar](https://twitter.com/maniarviral)  
 - Enhanced by: [TechGuys Origin](https://www.tiktok.com/@techguys_origin)  
 - Repo: [github.com/Maiake-ops/iseeu](https://github.com/Maiake-ops/iseeu)
+- Contributor: [Natureless1](https://github.com/naturelessGit)
 
 ---
 
 ## ⚠️ Legal Notice
 **For authorized security testing only.**  
 ❗ Requires explicit permission before use.
-```

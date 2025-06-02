@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 # Function to kill processes gracefully
 kill_servers() {
     # Kill SSH tunnel if running
@@ -41,4 +41,5 @@ kill_servers
 # Confirmation message
 echo -e "\n[+] All services stopped successfully."
 sleep 2
+clear
 exit 0
