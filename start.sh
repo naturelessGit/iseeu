@@ -16,7 +16,7 @@ case "$choice" in
     clear
     chmod +x kill-server.sh start.sh
     ./kill-server.sh
-    ./start.sh
+    exec ./start.sh
     ;;
   *)
     echo "[!] Invalid option. Try again."
