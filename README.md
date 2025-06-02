@@ -46,7 +46,7 @@ Termux (Android)	pkg install -y openssh python
 
 🚀 Usage
 
-./Iseeu.sh          # Start the tracker
+sh Iseeu.sh          # Start the tracker
 ./kill-server.sh    # Stop tunnel and web server
 ./start.sh          # Menu launcher (recommended)
 
