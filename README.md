@@ -30,64 +30,65 @@ Works on **Kali**, **Ubuntu**, **Fedora**, **Arch**, **macOS**, **Termux (Androi
 git clone https://github.com/Maiake-ops/iseeu.git
 cd iseeu
 chmod +x *.sh  # Make all scripts executable
+```
 
-3. Install Dependencies
+# 3. Install Dependencies
 
-Platform	Command
-
-Debian/Ubuntu/Kali: 	sudo apt install -y openssh-client python3
-Fedora/RHEL: 	sudo dnf install -y openssh-clients python3
-Arch/Manjaro	: sudo pacman -S openssh python
-MacOS: brew install openssh python3
-Termux (Android):	pkg install -y busybox nmap
-
-
+| Platform       | Command                                      |
+|----------------|----------------------------------------------|
+| Debian/Ubuntu/Kali | `sudo apt install -y openssh-client python3` |
+| Fedora/RHEL    | `sudo dnf install -y openssh-clients python3`                    |
+| Arch/Manjaro   | `sudo pacman -S openssh python`                         |
+| macOS (Homebrew) | `brew install openssh python3`                         |
+| Termux (Android) | `pkg install -y busybox nmap`                       |
 
 ---
 
-🚀 Usage
+# 🚀 Usage
 
+```bash
 sh Iseeu.sh          # Start the tracker (for Android only)
 bash Iseeu.sh       # Normal startup for (non-MLC only)
 ./kill-server.sh    # Stop tunnel and web server
 ./start.sh          # Menu launcher (recommended)
+```
 
 if you are on Android if you use bash Iseeu.sh it will freeze because it's a minimal Linux container (MLC)
 
 
 ---
 
-🌟 Features
+# 🌟 Features
 
-✔️ All-in-One Installer — Covers Git and dependency setup
+- ✔️ All-in-One Installer — Covers Git and dependency setup
 
-✔️ One-Command Launch — Easy for beginners
+- ✔️ One-Command Launch — Easy for beginners
 
-✔️ Cross-Platform Support — Linux, Termux, macOS, and more
+- ✔️ Cross-Platform Support — Linux, Termux, macOS, and more
 
-✔️ Serveo Tunnel + Web UI — Collects geolocation from targets
-
-
-
----
-
-📜 Credits
-
-🧠 Original Author: Viral Maniar
-
-🔧 Modded by: Techguys Origin
-
-📦 Repo: github.com/Maiake-ops/iseeu
-
-🌿 Contributor: Natureless1
+- ✔️ Serveo Tunnel + Web UI — Collects geolocation from targets
 
 
 
 ---
 
-⚠️ Legal Notice
+# 📜 Credits
 
-> For educational use and authorized testing only.
+- 🧠 Original Author: Viral Maniar
+
+- 🔧 Modded by: Techguys Origin
+
+- 📦 Repo: github.com/Maiake-ops/iseeu
+
+- 🌿 Contributor: Natureless1
+
+
+
+---
+
+# ⚠️ Legal Notice
+
+For educational use and authorized testing only. \
 ❗ Do not use without explicit permission of the target system owner.
 
 
