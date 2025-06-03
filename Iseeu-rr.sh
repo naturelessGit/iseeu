@@ -39,7 +39,9 @@ NGROK_PID=$!
 echo "[*] Waiting for ngrok API..."
 for i in {1..10}; do
     URL=$(curl -s http://localhost:4040/api/tunnels | grep -oE 'https://[a-z0-9\-]+\.ngrok.io' | head -n 1)
-    if [ -n "$URL" ]; then break; fi
+    if [ -n "$URL" ]; then
+        break
+    fi
     sleep 1
 done
 
@@ -50,4 +52,10 @@ else
     echo "[✗] Failed to get ngrok URL after waiting."
     echo "--- ngrok log output ---"
     tail -n 10 "$LOG_FILE"
-    kill $SERVER_PID $NGROK_PID 2
+    kill $SERVER_PID $NGROK_PID 2>/dev/null
+    exit 1
+fi
+
+echo "[*] Press Ctrl+C to stop."
+trap 'echo "[*] Stopping..."; kill $SERVER_PID $NGROK_PID 2>/dev/null' EXIT
+wait
