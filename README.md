@@ -36,9 +36,9 @@ chmod +x *.sh  # Make all scripts executable
 Platform	Command
 
 Debian/Ubuntu/Kali: 	sudo apt install -y openssh-client python3
-Fedora/RHEL:	sudo dnf install -y openssh-clients python3
+Fedora/RHEL: 	sudo dnf install -y openssh-clients python3
 Arch/Manjaro	: sudo pacman -S openssh python
-MacOS:
+MacOS: brew install openssh python3
 Termux (Android):	pkg install -y busybox nmap
 
 
