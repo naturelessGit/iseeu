@@ -11,10 +11,13 @@ read -p "[?] Enter port to use for logging with Ncat (must differ, default 9999)
 NCAT_PORT=${NCAT_PORT:-9999}
 
 WEB_DIR="$HOME/webpage"
+LOG_FILE="$HOME/iseeu/logs/log_$(date '+%Y-%m-%d_%H-%M-%S').txt"
+mkdir -p "$(dirname "$LOG_FILE")"
 
 echo "[*] Killing existing processes..."
 pkill -f "python3 -m http.server" 2>/dev/null
 pkill -f ncat 2>/dev/null
+pkill -f "ssh -o ServerAliveInterval" 2>/dev/null
 sleep 1
 
 echo "[*] Creating/clearing web directory: $WEB_DIR"
@@ -54,7 +57,10 @@ sleep 2
 echo "[+] Python server running (PID $SERVER_PID)"
 
 echo "[*] Starting Serveo tunnel..."
-ssh -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1 &
+serveo_tunnel() {
+    ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1
+}
+serveo_tunnel &
 SSH_PID=$!
 sleep 5
 
@@ -67,8 +73,22 @@ else
     exit 1
 fi
 
+# Auto-restart Serveo if it crashes
+echo "[*] Starting Serveo watchdog..."
+(
+while true; do
+    if ! pgrep -f "ssh.*serveo.net" > /dev/null; then
+        echo "[!] Serveo tunnel down. Restarting..."
+        serveo_tunnel &
+    fi
+    sleep 30
+done
+) &
+
 echo "[*] Logging connections with ncat on port $NCAT_PORT..."
-ncat -lvkp "$NCAT_PORT" &
+ncat -lvkp "$NCAT_PORT" | while read -r line; do
+    echo "$(date): $line" >> "$LOG_FILE"
+done &
 NCAT_PID=$!
 
 trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID $NCAT_PID 2>/dev/null; exit' INT
