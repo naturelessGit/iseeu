@@ -34,20 +34,13 @@ chmod +x *.sh  # Make all scripts executable
 
 # 3. Install Dependencies
 
-Platform | Command
--------------------
-Debian/Ubuntu/Kali | sudo apt install -y openssh-client python3
--------------------
-Fedora/RHEL | sudo dnf install -y openssh-clients python3
--------------------
-Arch/Manjaro | sudo pacman -S openssh python
--------------------
-MacOS | brew install openssh python3
--------------------
-Termux (Android) | pkg install -y busybox nmap
--------------------
-
-
+| Platform       | Command                                      |
+|----------------|----------------------------------------------|
+| Debian/Ubuntu/Kali | `sudo apt install -y openssh-client python3` |
+| Fedora/RHEL    | `sudo dnf install -y openssh-clients python3`                    |
+| Arch/Manjaro   | `sudo pacman -S openssh python`                         |
+| macOS (Homebrew) | `brew install openssh python3`                         |
+| Termux (Android) | `pkg install -y busybox nmap`                       |
 
 ---
 
@@ -81,13 +74,13 @@ if you are on Android if you use bash Iseeu.sh it will freeze because it's a min
 
 # 📜 Credits
 
-🧠 Original Author: Viral Maniar
+- 🧠 Original Author: Viral Maniar
 
-🔧 Modded by: Techguys Origin
+- 🔧 Modded by: Techguys Origin
 
-📦 Repo: github.com/Maiake-ops/iseeu
+- 📦 Repo: github.com/Maiake-ops/iseeu
 
-🌿 Contributor: Natureless1
+- 🌿 Contributor: Natureless1
 
 
 
