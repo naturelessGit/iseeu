@@ -1,16 +1,36 @@
 #!/bin/bash
 
-clear
-echo "[1] Start I-See-U"
-echo "[2] Stop services and restart helper"
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
 
-read -rp "> " choice
+clear
+
+# Banner
+echo -e "${CYAN}"
+echo "██╗ ███████╗███████╗███████╗██╗   ██╗"
+echo "██║ ██╔════╝██╔════╝██╔════╝╚██╗ ██╔╝"
+echo "██║ ███████╗█████╗  █████╗   ╚████╔╝ "
+echo "██║ ╚════██║██╔══╝  ██╔══╝    ╚██╔╝  "
+echo "██║ ███████║███████╗███████╗   ██║   "
+echo "╚═╝ ╚══════╝╚══════╝╚══════╝   ╚═╝   "
+echo -e "${NC}"
+echo -e "${GREEN}        ~ I-See-U Control Panel ~${NC}\n"
+
+# Menu
+echo -e "${CYAN}[1]${NC} Start I-See-U"
+echo -e "${CYAN}[2]${NC} Stop services and restart helper"
+echo -e "${CYAN}[0]${NC} Exit"
+
+read -rp $'\n> ' choice
 
 case "$choice" in
   1)
     clear
     chmod +x Iseeu.sh
-    sh Iseeu.sh
+    bash Iseeu.sh
     ;;
   2)
     clear
@@ -18,8 +38,12 @@ case "$choice" in
     ./kill-server.sh
     exec ./start.sh
     ;;
+  0)
+    echo -e "${GREEN}Goodbye!${NC}"
+    exit 0
+    ;;
   *)
-    echo "[!] Invalid option. Try again."
+    echo -e "${RED}[!] Invalid option. Try again.${NC}"
     sleep 2
     exec "$0"
     ;;
