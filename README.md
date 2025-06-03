@@ -38,7 +38,7 @@ Platform	Command
 Debian/Ubuntu/Kali	sudo apt install -y openssh-client python3
 Fedora/RHEL	sudo dnf install -y openssh-clients python3
 Arch/Manjaro	sudo pacman -S openssh python
-Termux (Android)	pkg install -y openssh python
+Termux (Android)	pkg install -y busybox nmap
 
 
 
@@ -46,7 +46,8 @@ Termux (Android)	pkg install -y openssh python
 
 🚀 Usage
 
-sh Iseeu.sh          # Start the tracker
+sh Iseeu.sh          # Start the tracker (for Android only)
+bash Iseeu.sh       # Normal startup for (non-MLC only)
 ./kill-server.sh    # Stop tunnel and web server
 ./start.sh          # Menu launcher (recommended)
 
