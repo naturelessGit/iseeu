@@ -3,6 +3,7 @@
 PORT=8080
 WEB_DIR=~/webpage
 LOG_FILE=~/ngrok.log
+NGROK_CONFIG="$HOME/.config/ngrok/ngrok.yml"
 
 echo "[*] Checking if port $PORT is in use..."
 PID=$(lsof -t -i:$PORT 2>/dev/null)
@@ -24,13 +25,8 @@ sleep 2
 echo "[+] Python server running on localhost:$PORT (PID $SERVER_PID)"
 
 echo "[*] Checking ngrok installation..."
-if ! command -v ngrok >/dev/null 2>&1; then
-    echo "[✗] ngrok is not installed. Please install it first."
-    kill $SERVER_PID
-    exit 1
-fi
 
-if ! grep -q "authtoken" ~/.ngrok2/ngrok.yml 2>/dev/null; then
+if ! grep -q "authtoken" "$NGROK_CONFIG" 2>/dev/null; then
     echo "[✗] ngrok not authenticated. Add your token using:"
     echo "    ngrok config add-authtoken <your_token>"
     kill $SERVER_PID
@@ -38,19 +34,19 @@ if ! grep -q "authtoken" ~/.ngrok2/ngrok.yml 2>/dev/null; then
 fi
 
 echo "[*] Starting ngrok tunnel..."
-nohup ngrok http $PORT > "$LOG_FILE" 2>&1 &
+ngrok http $PORT > "$LOG_FILE" 2>&1 &
 NGROK_PID=$!
-sleep 6
+
+sleep 8
 
 echo "[*] Getting public URL from ngrok API..."
-URL=$(curl -s http://127.0.0.1:4040/api/tunnels | grep -oE 'https://[a-z0-9\-]+\.ngrok-free\.app' | head -n 1)
+URL=$(curl -s http://localhost:4040/api/tunnels | grep -oE 'https://[a-z0-9\-]+\.ngrok.io' | head -n 1)
 
 if [ -n "$URL" ]; then
     echo "[✓] Tunnel is ready:"
     echo "$URL"
 else
-    echo "[✗] Failed to get ngrok URL. Logs:"
-    tail -n 15 "$LOG_FILE"
+    echo "[✗] Failed to get ngrok URL."
     kill $SERVER_PID $NGROK_PID 2>/dev/null
     exit 1
 fi
