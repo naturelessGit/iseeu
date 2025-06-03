@@ -51,7 +51,7 @@ bash Iseeu.sh       # Normal startup for (non-MLC only)
 ./kill-server.sh    # Stop tunnel and web server
 ./start.sh          # Menu launcher (recommended)
 
-if you are on Android if you use bash I seeu.sh it will freeze because it's a minimal Linux container (MLC)
+if you are on Android if you use bash Iseeu.sh it will freeze because it's a minimal Linux container (MLC)
 
 
 ---
