@@ -30,16 +30,17 @@ Works on **Kali**, **Ubuntu**, **Fedora**, **Arch**, **macOS**, **Termux (Androi
 git clone https://github.com/Maiake-ops/iseeu.git
 cd iseeu
 chmod +x *.sh  # Make all scripts executable
+```
 
 3. Install Dependencies
 
 Platform	Command
 
-Debian/Ubuntu/Kali: 	sudo apt install -y openssh-client python3
-Fedora/RHEL: 	sudo dnf install -y openssh-clients python3
-Arch/Manjaro	: sudo pacman -S openssh python
-MacOS: brew install openssh python3
-Termux (Android):	pkg install -y busybox nmap
+Debian/Ubuntu/Kali: 	`sudo apt install -y openssh-client python3`
+Fedora/RHEL: 	`sudo dnf install -y openssh-clients python3`
+Arch/Manjaro	: `sudo pacman -S openssh python`
+MacOS: `brew install openssh python3`
+Termux (Android):	`pkg install -y busybox nmap`
 
 
 
