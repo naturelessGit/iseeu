@@ -8,6 +8,7 @@ kill_servers() {
         ["BusyBox server"]="busybox httpd -f -p 8080"
         ["Python server"]="python3 -m http.server 8080"
         ["Ncat server"]="ncat -l 8080"
+pkill ncat
     )
 
     for name in "${!services[@]}"; do
