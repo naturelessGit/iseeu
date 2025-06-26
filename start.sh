@@ -21,7 +21,8 @@ echo -e "${GREEN}        ~ I-See-U Control Panel ~${NC}\n"
 
 # Menu
 echo -e "${CYAN}[1]${NC} Start I-See-U"
-echo -e "${CYAN}[2]${NC} Stop services and restart helper"
+echo -e "${CYAN}[2]${NC} Start I-See-U for Termux"
+echo -e "${CYAN}[3]${NC} Stop services and restart helper"
 echo -e "${CYAN}[0]${NC} Exit"
 
 read -rp $'\n> ' choice
@@ -33,6 +34,10 @@ case "$choice" in
     bash Iseeu.sh
     ;;
   2)
+    clear
+    chmod +x Iseeu-termux.sh
+    bash Iseeu-termux.sh
+  3)
     clear
     chmod +x kill-server.sh start.sh
     ./kill-server.sh
