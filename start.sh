@@ -37,6 +37,7 @@ case "$choice" in
     clear
     chmod +x Iseeu-termux.sh
     bash Iseeu-termux.sh
+    ;;
   3)
     clear
     chmod +x kill-server.sh start.sh
